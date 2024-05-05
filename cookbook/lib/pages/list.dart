@@ -18,7 +18,7 @@ class _MyListPageState extends State<MyListPage> {
   }
   final _formKey = GlobalKey<FormState>();
   final _myInputController = TextEditingController();
-  List<String> _ingredients = [];
+  // List<String> _ingredients = [];
   
   @override
   void initState() {
@@ -34,15 +34,9 @@ class _MyListPageState extends State<MyListPage> {
 
 
   Future<void> _saveText(String? value) async {
-    setState(() {
-      _ingredients.add(value!);
-    });
-    await _storage?.writeList(_ingredients);
-
-    
+    setState(() { });
+    await _storage?.writeList(value!);
   }
-
- 
 
   void _sumbitInput() {
     if(_formKey.currentState!.validate()) {
@@ -124,11 +118,9 @@ class _MyListPageState extends State<MyListPage> {
                                   title: Text(snapshot.data![index]),
                                   //tileColor: Color.fromARGB(255, 181, 178, 205),
                                   onTap: () {
-                                    _storage!.removeList(snapshot.data![index]).then((_) {
-                                      setState(() {
-                                        // Clear the list to trigger a rebuild
-                                        _ingredients = [];
-                                      });
+                                    _storage!.removeList(snapshot.data![index])
+                                    .then((_) {
+                                      setState(() {});
                                     });
                                   },
                                   

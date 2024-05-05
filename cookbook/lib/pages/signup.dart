@@ -1,34 +1,50 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'package:cookbook/components/textfield.dart';
+import 'package:cookbook/firestorage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class SignupPage extends StatefulWidget {
+  const SignupPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<SignupPage> createState() => _SignupPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _SignupPageState extends State<SignupPage> {
+  final usernameContoller = TextEditingController();
+  final firstNameContoller = TextEditingController();
+  final lastNameContoller = TextEditingController();
   final emailContoller = TextEditingController();
-
   final passwordContoller = TextEditingController();
 
-  void userLogin() async {
+ UserInfoStorage? _storage;
+ _SignupPageState() {
+    _storage = UserInfoStorage(); 
+  }
+
+
+  Future<void> userSignUp() async {
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-      email: emailContoller.text, password: passwordContoller.text
-    );
-    } on FirebaseAuthException catch (e) {    
-        showDialog(context: context, builder: (context) {
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: emailContoller.text, password: passwordContoller.text
+      ).then((firebaseUser) => {
+        if(kDebugMode){
+          print('User: ${firebaseUser.user!.email} created successfully')
+        },
+
+        _storage?.addUserDetails(usernameContoller.text, firstNameContoller.text, lastNameContoller.text.trim(), firebaseUser.user!.email! )
+      });
+    } on FirebaseAuthException catch (e) {
+      // ignore: use_build_context_synchronously
+      showDialog(context: context, builder: (context) {
           return AlertDialog(title: Text(e.code));
         });
     } 
-
   }
+
+ 
 
   // This widget is the root of your application.
   @override
@@ -44,7 +60,6 @@ class _LoginPageState extends State<LoginPage> {
       
       body: SafeArea (
         child: Center (
-          
         child: SingleChildScrollView (
         child: Column(
         children: [
@@ -67,11 +82,14 @@ class _LoginPageState extends State<LoginPage> {
 
 
           const SizedBox(height: 50),
-          MyTextField(controller: emailContoller, hintText: "Email", obscureText: false),
-          const SizedBox(height: 15),
-         
-          MyTextField(controller: passwordContoller, hintText: "Password", obscureText: true),
           
+          MyTextField(controller: usernameContoller, hintText: "Username", obscureText: false),
+          MyTextField(controller: firstNameContoller, hintText: "First Name", obscureText: false),
+          MyTextField(controller: lastNameContoller, hintText: "Last Name", obscureText: false),
+          MyTextField(controller: emailContoller, hintText: "Email", obscureText: false),
+          MyTextField(controller: passwordContoller, hintText: "Password", obscureText: true),
+
+
 
           const SizedBox(height: 10),
 
@@ -79,18 +97,18 @@ class _LoginPageState extends State<LoginPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Text(
-                "Don't have account? ",
+                "Already have an account? ",
                 style: TextStyle(
                   fontSize: 16
                 ),
                 ),
                 GestureDetector(
                   onTap: () {
-                    Navigator.pushNamed(context, '/signup');
+                    Navigator.pushNamed(context, '/login');
                     
                   },
                   child: const Text(
-                  "Sign up",
+                  "Login",
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold
@@ -104,14 +122,17 @@ class _LoginPageState extends State<LoginPage> {
 
             ElevatedButton(
               onPressed: () {
-                userLogin();
+                  userSignUp();
+                  Navigator.pushNamed(context, '/auth');
+                
+
               },
               style: const ButtonStyle(
                 backgroundColor: MaterialStatePropertyAll<Color>(Colors.black)
                 
               ),
               child: const Text(
-                "Login",
+                "Sign Up",
                 style: TextStyle(
                   color: Colors.white
                 ),

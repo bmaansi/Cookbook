@@ -42,7 +42,7 @@ class _MyNavBarPageState extends State<MyNavBarPage> {
   
   final screens = [
     const MyHomePage(),
-    const MyFavPage(),
+    MyFavPage(),
     const MyListPage(),
     const MyProfilePage()
   ];

@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'package:cookbook/firestorage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -26,13 +26,18 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   String apiKey = "4b0512405e9543dc9b91d7ceaaf0fcde";
-  List<String> suggestions = [
-    "Pasta", "Burgers", "Cake"
-  ];
 
-  List<String> list = [
-    "apples","flour","sugar"
-  ];
+  GroceryListStorage? _grocStorage;
+  FavoritesStorage? _favStorage;
+  _MyHomePageState() {
+    _grocStorage = GroceryListStorage(); 
+    _favStorage = FavoritesStorage();
+  }
+  late List<String> list;
+  late List<int> faves;
+  String items = '';
+
+  
 
   Future<void> _launchUrl(Uri url) async {
     if (!await launchUrl(url)) {
@@ -43,12 +48,26 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   late Future<List<dynamic>> byIngredients;
-  late List<dynamic> byID;
-  int itemCount = 10;
+  late dynamic byID;
+  int itemCount = 15;
+  bool pressed = false;
 
+
+  void listForAPI() async {
+    for (var i in list) {
+      if (i != list.last) {
+        items += '$i,+';
+      } else {
+        items += i;
+      }
+    }
+  }
 
   Future<List<dynamic>> searchByIngredients() async {
-    var url = Uri.parse('https://api.spoonacular.com/recipes/findByIngredients?ingredients=${list[0]},+${list[1]},+${list[2]}&number=10&apiKey=$apiKey');
+    list = await _grocStorage!.readList();
+    faves = await _favStorage!.readFavorites();
+    listForAPI();
+    var url = Uri.parse('https://api.spoonacular.com/recipes/findByIngredients?ingredients=$items&number=15&ranking=1&apiKey=$apiKey');
     var response = await http.get(url);
     if (response.statusCode == 200) {
       var jsonResponse = jsonDecode(response.body);
@@ -65,14 +84,14 @@ class _MyHomePageState extends State<MyHomePage> {
     } 
   }
 
-  Future<List<dynamic>> searchByID(int id) async {
+  Future<dynamic> searchByID(int id) async {
     var url = Uri.parse('https://api.spoonacular.com/recipes/$id/information?apiKey=$apiKey');
     var response = await http.get(url);
     if (response.statusCode == 200) {
       var jsonResponse = jsonDecode(response.body);
       if (kDebugMode) {
         print('Response status: ${response.statusCode}');
-        print(jsonResponse[0]['title']);
+        print(jsonResponse['sourceUrl']);
       }
       return jsonResponse;
     } else {
@@ -83,20 +102,24 @@ class _MyHomePageState extends State<MyHomePage> {
     } 
   }
 
+  void favoriteRecipe(int id) {
+    faves.contains(id) ? _favStorage?.removeFavorites(id) : _favStorage?.writeFavorites(id)
+    .then((_) {
+      setState(()async  {
+        faves = await _favStorage!.readFavorites();
+      });
+    });
+  }
 
 
   @override
   void initState() {
     super.initState();
-    //setState(() {
-      byIngredients = searchByIngredients();  
-    //});
-
+    byIngredients = searchByIngredients();  
   }
 
   @override
   Widget build(BuildContext context) {
-   
      return MaterialApp(
       theme: ThemeData(
           useMaterial3: true, colorSchemeSeed: const Color(0xff6750a4)),
@@ -144,7 +167,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           ),
                         );
                       } else {
-                        //return Text(snapshot.data![0]['title']);
+                        
                         return SliverList.builder(
                           itemCount: itemCount,
                           itemBuilder: (context, index) {
@@ -152,18 +175,42 @@ class _MyHomePageState extends State<MyHomePage> {
                             return GestureDetector (
                               onTap : () async {
                                 byID = await searchByID(snapshot.data![index]['id']);
-                                //print(byID);
-                                Uri url = Uri.parse('${byID[index]['spoonacularSourceUrl']}');
+                                //print("PRINTING: $byID\n");
+                                Uri url = Uri.parse(byID['sourceUrl']);
                                 _launchUrl(url);
-                                 
-                                
                                 },
                               child: Card(
                                 child: Column (
+                                  
                                   children: [
                                     ListTile(
-                                      title: Text(snapshot.data![index]['title']),
-                                      subtitle: Image.network(snapshot.data![index]['image']),
+                                      title: Text(
+                                        snapshot.data![index]['title'],
+                                        style: const TextStyle(
+                                          fontSize: 20,
+                                        ),
+                                        ),
+                                        subtitle: Column(
+                                          children: <Widget>[
+                                            Image.network(snapshot.data![index]['image']),
+                                            IconButton(
+                                              onPressed: () {
+                                                favoriteRecipe(snapshot.data![index]['id']);
+                                                //setState(() {});
+                                              },  
+                                              icon: Icon(
+                                                 faves.contains(snapshot.data![index]['id']) 
+                                                 ? Icons.favorite
+                                                 : Icons.favorite_border
+                                              ),
+                                              color: 
+                                                faves.contains(snapshot.data![index]['id']) 
+                                                 ? Colors.red
+                                                 : Colors.black,
+                                            )
+                                          ],
+                                        ),
+                                      //subtitle: Image.network(snapshot.data![index]['image']),
                                     ),
                                     //Image.network(snapshot.data![index]['thumbnail']['lqip']),     
                                   ],

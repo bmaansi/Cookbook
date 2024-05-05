@@ -1,18 +1,8 @@
+import 'package:cookbook/pages/auth.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 
-
-// class ProfilePage extends StatelessWidget {
-//   const ProfilePage({super.key});
-
-//   // This widget is the root of your application.
-//   @override
-//   Widget build(BuildContext context) {
-//     return const MaterialApp(
-//       home: MyProfilePage(),
-//     );
-//   }
-// }
 
 class MyProfilePage extends StatefulWidget {
   const MyProfilePage({super.key});
@@ -23,11 +13,22 @@ class MyProfilePage extends StatefulWidget {
 
 class _MyProfilePageState extends State<MyProfilePage> {
 
+  // void signOut() {
+  //   await FirebaseAuth.instance.signOut();
+  // }
+
   @override
   Widget build(BuildContext context) {
    
-    return const Scaffold(      
-      body: Center(    
+    return Scaffold( 
+      appBar: AppBar(actions: [
+        IconButton(
+          onPressed: () async {
+            await FirebaseAuth.instance.signOut();
+          }, 
+          icon: const Icon(Icons.logout))
+      ],),     
+      body: const Center(    
         child: Column(       
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[

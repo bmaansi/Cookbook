@@ -1,13 +1,22 @@
+import 'package:cookbook/firebase_options.dart';
 import 'package:cookbook/navbar.dart';
+import 'package:cookbook/pages/auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 // import 'package:cookbook/pages/favorites.dart';
 // import 'package:cookbook/pages/home.dart';
 // import 'package:cookbook/pages/list.dart';
 // import 'package:cookbook/pages/profile.dart';
 import 'package:flutter/material.dart';
 import 'package:cookbook/pages/login.dart';
+import 'package:cookbook/pages/signup.dart';
 
 
-void main() {
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform
+  );
   runApp(const MyApp());
 }
 
@@ -25,14 +34,17 @@ class MyApp extends StatelessWidget {
          useMaterial3: true,
        ),
       routes: {
-        //'/login': (context) => const LoginPage(),
+        '/login': (context) => const LoginPage(),
+        '/signup': (context) => const SignupPage(),
         '/navbar': (context) => const NavBarPage(),
+        '/auth': (context) => const AuthPage(),
+
         // '/home': (context) => const MyHomePage(),
         // '/fav': (context) => const MyFavPage(),
         // '/list': (context) => const MyListPage(),
         // '/profile': (context) => const MyProfilePage()
       },
-      home: const LoginPage(),
+      home: const AuthPage(),
     );
   }
 }
