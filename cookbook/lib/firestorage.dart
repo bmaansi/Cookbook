@@ -14,7 +14,8 @@ class UserInfoStorage {
       'First Name': fname,
       'Last Name': lname,
       'List': [],
-      'Favorites': []
+      'Favorites': [],
+      'Recipes': []
     }).then((value) {
         if(kDebugMode) {
           print("\nSUCCESSFUL\n");
@@ -26,8 +27,47 @@ class UserInfoStorage {
     });
   }
 
-}
+  Future<String> readUsername() async {
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+    DocumentSnapshot ds = await firestore.collection('Users').doc(FirebaseAuth.instance.currentUser!.email!.trim()).get();
+    if(ds.data() != null){
+      Map<String, dynamic> data = (ds.data() as Map<String, dynamic>);
+      if(data.containsKey('Username')){
+        return data['Username'];
+        
+      }
+    }
+    return "";
 
+  }
+
+    Future<String> readFirstname() async {
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+    DocumentSnapshot ds = await firestore.collection('Users').doc(FirebaseAuth.instance.currentUser!.email!.trim()).get();
+    if(ds.data() != null){
+      Map<String, dynamic> data = (ds.data() as Map<String, dynamic>);
+      if(data.containsKey('First Name')){
+        return data['First Name'];
+      }
+    }
+    return "";
+  }
+
+  Future<String> readLastname() async {
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+    DocumentSnapshot ds = await firestore.collection('Users').doc(FirebaseAuth.instance.currentUser!.email!.trim()).get();
+    if(ds.data() != null){
+      Map<String, dynamic> data = (ds.data() as Map<String, dynamic>);
+      if(data.containsKey('Last Name')){
+        return data['Last Name'];
+        
+      }
+    }
+    return "";
+
+  }
+
+}
 
 class GroceryListStorage {
   GroceryListStorage();
@@ -84,7 +124,6 @@ class GroceryListStorage {
 
 }
 
-
 class FavoritesStorage {
   FavoritesStorage();
 
@@ -107,7 +146,7 @@ class FavoritesStorage {
 
 
   Future<void> removeFavorites(int id) async {
-    await Firebase.initializeApp(); // Initialize Firebase if not done elsewhere
+    await Firebase.initializeApp();
 
     FirebaseFirestore firestore = FirebaseFirestore.instance;
       firestore.collection('Users').doc(FirebaseAuth.instance.currentUser!.email!.trim()).update({
@@ -127,12 +166,49 @@ class FavoritesStorage {
     await Firebase.initializeApp(); 
     FirebaseFirestore firestore = FirebaseFirestore.instance;
     DocumentSnapshot ds = await firestore.collection('Users').doc(FirebaseAuth.instance.currentUser!.email!.trim()).get();
-    if(ds.exists) { // Check if document exists
+    if(ds.exists) {
       Map<String, dynamic> data = ds.data() as Map<String, dynamic>? ?? {};
-      if(data.containsKey('Favorites') && data['Favorites'] is List) { // Check if 'List' key exists and its value is a List
+      if(data.containsKey('Favorites') && data['Favorites'] is List) { 
         return List<int>.from(data['Favorites']);
       }
     }
+    return [];
+  }
+
+}
+
+class RecipesStorage {
+  RecipesStorage();
+    Future<void> writeRecipe(dynamic recipe) async {
+    // print("\nWRITING TO LIST\n");
+    await Firebase.initializeApp(); 
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+      firestore.collection('Users').doc(FirebaseAuth.instance.currentUser!.email!.trim()).update({
+        'Recipes': FieldValue.arrayUnion([recipe])
+      }).then((value) {
+          if(kDebugMode) {
+            print("WRITING SUCCESSFUL");
+          } 
+      }).catchError((error) {
+          if(kDebugMode) {
+            print("WRITING ERROR: $error");
+          } 
+      });
+  }
+
+  Future<List<Map<String, dynamic>>> readRecipes() async {
+    await Firebase.initializeApp(); 
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+    DocumentSnapshot ds = await firestore.collection('Users').doc(FirebaseAuth.instance.currentUser!.email!.trim()).get();
+     if(ds.exists) {
+    Map<String, dynamic> data = ds.data() as Map<String, dynamic>? ?? {};
+
+
+    if(data.containsKey('Recipes') && data['Recipes'] is List<dynamic>) { 
+      //print(List<Map<String, dynamic>>.from(data['Recipes']));
+      return List<Map<String, dynamic>>.from(data['Recipes']);
+    }
+  } 
     return [];
   }
 

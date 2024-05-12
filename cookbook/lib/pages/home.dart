@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:cookbook/firestorage.dart';
+import 'package:cookbook/pages/searchbar.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -49,8 +50,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
   late Future<List<dynamic>> byIngredients;
   late dynamic byID;
-  int itemCount = 15;
+  int itemCount = 10;
   bool pressed = false;
+  String? _searchingWithQuery;
+  late Iterable<Widget> _lastOptions = <Widget>[];
 
 
   void listForAPI() async {
@@ -66,8 +69,12 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<List<dynamic>> searchByIngredients() async {
     list = await _grocStorage!.readList();
     faves = await _favStorage!.readFavorites();
+   
     listForAPI();
-    var url = Uri.parse('https://api.spoonacular.com/recipes/findByIngredients?ingredients=$items&number=15&ranking=1&apiKey=$apiKey');
+     if (items == '') {
+      items += 'apples';
+    }
+    var url = Uri.parse('https://api.spoonacular.com/recipes/findByIngredients?ingredients=$items&number=10&ranking=1&apiKey=$apiKey');
     var response = await http.get(url);
     if (response.statusCode == 200) {
       var jsonResponse = jsonDecode(response.body);
@@ -76,7 +83,8 @@ class _MyHomePageState extends State<MyHomePage> {
         print(jsonResponse[0]['id']);
       }
       return jsonResponse;
-    } else {
+    } 
+    else {
       if (kDebugMode) {
         print('Response status: ${response.statusCode}');
       }
@@ -101,6 +109,27 @@ class _MyHomePageState extends State<MyHomePage> {
       return List.empty();
     } 
   }
+
+
+  Future<List<dynamic>> searchBar(String s) async {
+    var url = Uri.parse('https://api.spoonacular.com/recipes/autocomplete?number=5&query=$s&apiKey=$apiKey');
+    var response = await http.get(url);
+    if (response.statusCode == 200) {
+      var jsonResponse = jsonDecode(response.body);
+      if (kDebugMode) {
+        print('Response status: ${response.statusCode}');
+        print(jsonResponse);
+      }
+      return jsonResponse;
+    } else {
+      if (kDebugMode) {
+        print('Response status: ${response.statusCode}');
+      }
+      return List.empty();
+    } 
+  }
+
+
 
   void favoriteRecipe(int id) {
     faves.contains(id) ? _favStorage?.removeFavorites(id) : _favStorage?.writeFavorites(id)
@@ -136,17 +165,32 @@ class _MyHomePageState extends State<MyHomePage> {
                 pinned: true, // We can also uncomment this line and set `pinned` to true to see a pinned search bar.
                 title: SearchAnchor.bar(
                   suggestionsBuilder:
-                      (BuildContext context, SearchController controller) {
-                    return List<Widget>.generate(
-                      5,
-                      (int index) {
+                    (BuildContext context, SearchController controller) async {
+                      _searchingWithQuery = controller.text;
+                      final List<dynamic> options = (
+                        await searchBar(_searchingWithQuery!)
+                      );
+
+                      if (_searchingWithQuery != controller.text) {
+                        return _lastOptions;
+                      }
+                      _lastOptions = List<ListTile>.generate(options.length, (index) {
+                        final String title = options[index]["title"];
+                        final int id = options[index]["id"];
                         return ListTile(
-                          titleAlignment: ListTileTitleAlignment.center,
-                          title: Text('Initial list item $index'),
+                          title: Text(title),
+                          onTap: () {
+                            Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MySearchBar(id: id),
+                            ),
+                          );
+                          },
                         );
-                      },
-                    );
-                  },
+                      });
+                      return _lastOptions;
+                    },
                 ),
               ),
               FutureBuilder<List> (
@@ -174,10 +218,65 @@ class _MyHomePageState extends State<MyHomePage> {
                             //return Text(snapshot.data![index]['title']);
                             return GestureDetector (
                               onTap : () async {
-                                byID = await searchByID(snapshot.data![index]['id']);
-                                //print("PRINTING: $byID\n");
-                                Uri url = Uri.parse(byID['sourceUrl']);
-                                _launchUrl(url);
+                               // byID = await searchByID(snapshot.data![index]['id']);
+                                // Uri url = Uri.parse(byID['sourceUrl']);
+                                // _launchUrl(url);
+                                showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      title: Text(snapshot.data![index]['title']),
+                                      content: Text(
+                                        // ignore: prefer_interpolation_to_compose_strings
+                                        "Missing Ingredients: ${snapshot.data![index]["missedIngredientCount"]}"
+                                        "\nYou are missing:" +
+                                       (snapshot.data![index]["missedIngredients"] as List)
+                                        .map((ingredient) => "\n-${ingredient["name"]} ${ingredient["amount"]} ${ingredient["unitShort"]}")
+                                        .join(),
+                                        
+                                        ),
+                                      actions: <Widget>[
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context, 'Cancel'),
+                                          child: const Text('Cancel'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () async {
+                                            byID = await searchByID(snapshot.data![index]['id']);
+                                            Uri url = Uri.parse(byID['sourceUrl']);
+                                            Navigator.pop(context, 'Cancel');
+                                            showDialog(
+                                              context: context,
+                                              builder: (BuildContext context) {
+                                                return AlertDialog(
+                                                  title: const Text("Summary"),
+                                                  content: Text(
+                                                    "Time: ${byID["readyInMinutes"]} minutes\n"
+                                                    "Servings: ${byID["servings"]}"
+                                                  ),
+                                                  
+                                                  actions: <Widget>[
+                                                  TextButton(
+                                                    onPressed: () => Navigator.pop(context, 'Cancel'),
+                                                    child: const Text('Cancel'),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      launchUrl(url);
+                                                    },
+                                                    child: const Text('Go to recipe'),
+                                                  ),
+                                                  ]
+                                                );
+                                              }
+                                            );              
+                                          },
+                                          child: const Text('More Information >'),
+                                        ),
+                                      ],
+                                    );
+                                    }
+                                );
                                 },
                               child: Card(
                                 child: Column (
@@ -210,6 +309,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                             )
                                           ],
                                         ),
+                                        
                                       //subtitle: Image.network(snapshot.data![index]['image']),
                                     ),
                                     //Image.network(snapshot.data![index]['thumbnail']['lqip']),     

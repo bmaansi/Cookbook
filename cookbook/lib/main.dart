@@ -23,12 +23,10 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
 
-      // title: 'Flutter Demo',
        theme: ThemeData(
          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
          useMaterial3: true,
@@ -38,6 +36,8 @@ class MyApp extends StatelessWidget {
         '/signup': (context) => const SignupPage(),
         '/navbar': (context) => const NavBarPage(),
         '/auth': (context) => const AuthPage(),
+        '/myrecipes': (context) => const AuthPage(),
+
 
         // '/home': (context) => const MyHomePage(),
         // '/fav': (context) => const MyFavPage(),
