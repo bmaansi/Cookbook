@@ -1,4 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 
 
 class MyRecipesPage extends StatefulWidget {
@@ -12,7 +15,13 @@ class MyRecipesPage extends StatefulWidget {
 
 class _MyRecipesPageState extends State<MyRecipesPage> {
 
- 
+    Future<void> _launchUrl(Uri url) async {
+    if (!await launchUrl(url)) {
+      if (kDebugMode) {
+      print('Could not launch $url'); 
+      }
+    }
+  }
 
   @override
     Widget build(BuildContext context) {
@@ -26,6 +35,8 @@ class _MyRecipesPageState extends State<MyRecipesPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 8),
+            Image.network(widget.detail['Image']),
+
             Text(
               // ignore: prefer_interpolation_to_compose_strings
               'STEPS:' +

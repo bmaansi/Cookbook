@@ -1,7 +1,12 @@
+
 import 'package:cookbook/firestorage.dart';
+import 'package:cookbook/pages/addRecipe.dart';
 import 'package:cookbook/pages/myrecipes.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:flutter/material.dart';
+
+
 
 
 
@@ -23,9 +28,10 @@ class _MyProfilePageState extends State<MyProfilePage> {
   _MyProfilePageState() {
     _userInfoStorage = UserInfoStorage();
     _recipesStorage =  RecipesStorage();
-
-    
   }
+
+
+
 
 
   @override
@@ -102,20 +108,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
         const SizedBox(
           height: 10,
         ),
-        Row (
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text( "MY RECIPES" ),
-            IconButton(
-            onPressed: () {
-
-            },
-            icon: const Icon(Icons.add)
-            ),
-              
-          ]
-          
-          ),
+        
         const SizedBox(
           height: 10,
         ),
@@ -134,7 +127,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
                   );
                 } else {
                   return SizedBox(
-                    height: 200.0,
+                    height: MediaQuery.of(context).size.height,
                     
                     child: ListView.builder(
                       
@@ -175,6 +168,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
           
         ),
         
+        
       ],
       
     ),
@@ -183,11 +177,18 @@ class _MyProfilePageState extends State<MyProfilePage> {
   
 ),
         floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            
-          }, 
+          onPressed:  () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const MyAddRecipesPage(),
+              ),
+            );
+
+          },
           child: const Icon(Icons.add)
         ),
+         
 
     );
   }

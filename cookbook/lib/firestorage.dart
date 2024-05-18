@@ -179,7 +179,7 @@ class FavoritesStorage {
 
 class RecipesStorage {
   RecipesStorage();
-    Future<void> writeRecipe(dynamic recipe) async {
+    Future<void> writeRecipe(Map<String, dynamic> recipe) async {
     // print("\nWRITING TO LIST\n");
     await Firebase.initializeApp(); 
     FirebaseFirestore firestore = FirebaseFirestore.instance;
